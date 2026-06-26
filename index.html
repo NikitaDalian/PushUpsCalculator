@@ -106,6 +106,13 @@
   .rules{font-size:12.5px;color:var(--ink-soft);padding:2px 4px;margin-top:6px}
   .rules b{color:var(--ink)}
   .rules p{margin-bottom:5px}
+
+  .law{background:#FFF4F1;border:1px solid #F0C5BB;border-left:4px solid var(--tape);border-radius:4px;padding:13px 15px;margin-bottom:14px}
+  .law .lh{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:var(--tape-dark);margin-bottom:5px}
+  .law p{font-size:13px;color:var(--ink);margin:0}
+  .law b{font-weight:600}
+  .tag{display:inline-block;font-family:'Inter';font-weight:600;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);border:1px solid var(--line);border-radius:2px;padding:1px 5px;vertical-align:middle;margin-left:6px}
+
   @media (prefers-reduced-motion:reduce){#out.show{animation:none}}
 </style>
 </head>
@@ -147,6 +154,11 @@
       <div class="coach" id="coach"></div>
     </div>
 
+    <div class="law">
+      <div class="lh">Закон челленджа</div>
+      <p><b>Цель — это число повторов за день, а не за подходы.</b> Не лезет чисто — добавь подход. Запас 2–3 повтора и техника важнее красивой цифры. До отказа — только в тесте.</p>
+    </div>
+
     <div class="plans-label">Выбери скорость — нажми на карточку</div>
     <div id="plans"></div>
     <div class="pick-hint" id="pickHint">↑ нажми на план, чтобы выбрать и поделиться</div>
@@ -176,6 +188,7 @@
       <div class="phase"><div class="d">Дни 11–22</div><div class="t"><b>Начинает жечь.</b> Подходы перестают быть лёгкими, тут отваливается большинство. Держи схему, не уходи в отказ — добирай объём числом подходов, а не геройством.</div></div>
       <div class="phase"><div class="d">Дни 23–30</div><div class="t"><b>Настоящий тест.</b> Подходы подбираются к проценту от твоего максимума. Поплыла техника (таз провис, локти враскоряку) — лучше недобрать пару повторов, чем добить с травмой плеча.</div></div>
       <div class="phase"><div class="d">Плато</div><div class="t"><b>Линейная прибавка рано или поздно упрётся.</b> Не закрыл норму чисто 2 дня подряд — откатись на 3–4 дня назад и иди снова. Это разгон, а не провал.</div></div>
+      <div class="phase"><div class="d">Суставы</div><div class="t"><b>Жжение в мышцах — норма, боль в плече или запястье — нет.</b> Заболело — уходи на наклонные, с колен или на кулаки. Не терпи: плечо дороже цепочки.</div></div>
       <div class="phase"><div class="d">Главное</div><div class="t">Сон 7+ часов и один день отдыха для верха в неделю дают больше, чем любая лишняя серия. Смысл — не «кто больше», а закрыть месяц без дыр и прибавить по сравнению с собой.</div></div>
     </div>
 
@@ -227,6 +240,14 @@ function buildPlan(start, pct){
   return {rule:rule, series:series, day30:series[29]};
 }
 
+// сколько подходов нужно к финалу, чтобы держать запас 2-3 повтора:
+// за подход не выше ~55% свежего максимума. Потолок не режем — растим подходы.
+function finaleScheme(day30){
+  var setsF = Math.max(STATE.sets, Math.ceil(day30 / (0.55 * STATE.a)));
+  var perF  = Math.max(1, Math.round(day30 / setsF));
+  return {setsF:setsF, perF:perF};
+}
+
 var STATE = null; // вычисленные данные
 
 function calc(){
@@ -245,13 +266,26 @@ function calc(){
 
   var built = PLANS.map(function(p){ return buildPlan(start, p.pct); });
 
-  STATE = {a:a,b:b,start:start,sets:sets,perSet:perSet,ratio:ratio,exName:exName,built:built,rec:0,selected:null};
+  // подготовленность: жёсткий — только при достаточной базе, не только по восстановлению
+  var prepared = (variant === 'full' && a >= 25) || (variant === 'knee' && a >= 30);
 
-  // рекомендуемый план по восстановлению
+  STATE = {a:a,b:b,start:start,sets:sets,perSet:perSet,ratio:ratio,exName:exName,built:built,prepared:prepared,rec:0,selected:null};
+
+  // рекомендуемый план: восстановление (B/A) + порог подготовленности
   var coach;
-  if(ratio >= 0.5){ STATE.rec = 2; coach = '<b>Восстановление сильное</b> ('+a+'→'+b+'). Мотор есть — можешь смело брать жёсткий.'; }
-  else if(ratio >= 0.33){ STATE.rec = 1; coach = '<b>Восстановление среднее</b> ('+a+'→'+b+'). Бери основной — ровный прирост без геройства.'; }
-  else { STATE.rec = 0; coach = '<b>Садишься быстро</b> ('+a+'→'+b+'). Не лезь в жёсткий — щадящий и больше подходов, иначе сольёшься к середине.'; }
+  if(ratio < 0.33){
+    STATE.rec = 0;
+    coach = '<b>Садишься быстро</b> ('+a+'→'+b+'). Бери щадящий и больше подходов, иначе сольёшься к середине.';
+  } else if(ratio < 0.5){
+    STATE.rec = 1;
+    coach = '<b>Восстановление среднее</b> ('+a+'→'+b+'). Основной — ровный прирост без геройства.';
+  } else if(prepared){
+    STATE.rec = 2;
+    coach = '<b>Сильное восстановление + готовая база</b> ('+a+'→'+b+'). Можешь брать жёсткий.';
+  } else {
+    STATE.rec = 1;
+    coach = '<b>Восстановление сильное, но база ещё небольшая</b> ('+a+'→'+b+'). Рекомендую основной; жёсткий — когда выйдешь на 25 классических / 30 с колен.';
+  }
 
   document.getElementById('startNum').innerHTML = start + '<span>отжиманий</span>';
   document.getElementById('scheme').textContent = sets + ' подхода по ' + perSet + ' · ' + exName + ' · не до отказа';
@@ -268,17 +302,17 @@ function renderPlans(){
   var wrap = document.getElementById('plans'); wrap.innerHTML = '';
   PLANS.forEach(function(p, i){
     var r = STATE.built[i];
-    var finPerSet = Math.max(1, Math.round(r.day30 / STATE.sets));
+    var f = finaleScheme(r.day30);
     var mult = (r.day30 / STATE.start).toFixed(1);
     var el = document.createElement('div');
     el.className = 'plan' + (i===STATE.selected?' sel':'');
     var stamp = (i===STATE.rec) ? '<div class="stamp">'+(i===STATE.selected?'выбрано':'тебе сюда')+'</div>'
                 : (i===STATE.selected ? '<div class="stamp">выбрано</div>' : '');
     el.innerHTML = stamp +
-      '<div class="plan-top"><div class="plan-name">'+p.name+'</div>'+
+      '<div class="plan-top"><div class="plan-name">'+p.name+(i===2?'<span class="tag">для подготовленных</span>':'')+'</div>'+
         '<div class="bars">'+[0,1,2].map(function(n){return '<i class="'+(n<p.bars?'fill':'')+'"></i>';}).join('')+'</div></div>'+
       '<div class="plan-rule">'+r.rule+'</div>'+
-      '<div class="plan-sets"><b>'+STATE.sets+' подходов</b>: старт по '+STATE.perSet+' → финал по '+finPerSet+'</div>'+
+      '<div class="plan-sets"><b>Подходы:</b> старт '+STATE.sets+'×'+STATE.perSet+' → финал '+f.setsF+'×'+f.perF+'</div>'+
       '<div class="plan-grid">'+
         '<div class="stat"><div class="k">К 30-му дню</div><div class="v">'+r.day30+' <small>×'+mult+'</small></div></div>'+
         '<div class="stat"><div class="k">Прирост к старту</div><div class="v">+'+(r.day30-STATE.start)+'</div></div>'+
@@ -295,7 +329,7 @@ function selectPlan(i){
   document.getElementById('pickHint').style.display = 'none';
 
   var p = PLANS[i], r = STATE.built[i];
-  var finPerSet = Math.max(1, Math.round(r.day30 / STATE.sets));
+  var f = finaleScheme(r.day30);
   var mult = (r.day30 / STATE.start).toFixed(1);
 
   var sum = '🏋️ Челлендж «Отжимания» — мой план\n'+
@@ -303,7 +337,7 @@ function selectPlan(i){
     'Скорость: '+p.name+'\n'+
     'Старт: '+STATE.start+'/день — '+STATE.sets+' подходов по '+STATE.perSet+'\n'+
     'Прибавка: '+r.rule+'\n'+
-    'К 30-му дню: '+r.day30+' (×'+mult+'), подход ≈ '+finPerSet;
+    'К 30-му дню: '+r.day30+' (×'+mult+') — финал '+f.setsF+' подходов по ~'+f.perF;
   document.getElementById('shareSum').textContent = sum;
   document.getElementById('fallback').value = sum;
   STATE.summary = sum;
@@ -311,12 +345,11 @@ function selectPlan(i){
   // рекомендации под выбор
   var recs = [];
   if(STATE.b === 0) recs.push('Второй подход — 0. Выносливость пока на нуле: держи джокеры под рукой и не спеши.');
-  var finPct = Math.round(finPerSet / STATE.a * 100);
-  if(finPerSet > STATE.a * 0.85) recs.push('К финалу подход (~'+finPerSet+') почти равен твоему нынешнему максимуму ('+STATE.a+'). Реально только при нормальном сне и без пропусков — иначе ступенью мягче.');
-  else if(finPerSet > STATE.a * 0.6) recs.push('К финалу подходы дойдут до ~'+finPct+'% твоего максимума. Ощутимо, но посильно.');
-  else recs.push('К финалу подходы остаются комфортными (~'+finPct+'% максимума) — финиш почти гарантирован.');
-  if(i > STATE.rec) recs.push('Это быстрее рекомендованного по восстановлению. Можно, но следи за техникой и используй откат при заминке.');
-  if(i < STATE.rec) recs.push('Это мягче рекомендованного — стабильно дойдёшь, можешь позже переключиться вверх.');
+  var finPct = Math.round(f.perF / STATE.a * 100);
+  recs.push('К финалу дроби не на '+STATE.sets+', а на '+f.setsF+' подходов по ~'+f.perF+' (≈'+finPct+'% максимума за подход). Если и так лезет в отказ — добавь ещё подход: число за день важнее числа подходов.');
+  if(i === 2 && !STATE.prepared) recs.push('Жёсткий рассчитан на подготовленных (от 25 классических / 30 с колен). На твоей базе это резкий скачок нагрузки — разумнее основной, а жёсткий позже.');
+  if(i > STATE.rec) recs.push('Быстрее рекомендованного по восстановлению. Можно, но следи за техникой и при заминке откатись на 3–4 дня.');
+  if(i < STATE.rec) recs.push('Мягче рекомендованного — стабильный финиш, позже можно переключиться вверх.');
   var rl = document.getElementById('recList');
   rl.innerHTML = recs.map(function(t){return '<li>'+t+'</li>';}).join('');
 
@@ -395,7 +428,7 @@ document.getElementById('copyBtn').addEventListener('click', function(){
 
 document.getElementById('imgBtn').addEventListener('click', function(){
   var p = PLANS[STATE.selected], r = STATE.built[STATE.selected];
-  var finPerSet = Math.max(1, Math.round(r.day30 / STATE.sets));
+  var f = finaleScheme(r.day30);
   var mult = (r.day30 / STATE.start).toFixed(1);
   var c = document.createElement('canvas'); c.width=600; c.height=420;
   var x = c.getContext('2d');
@@ -410,7 +443,7 @@ document.getElementById('imgBtn').addEventListener('click', function(){
     ['Скорость', p.name],
     ['Старт', STATE.start+' / день  —  '+STATE.sets+' подходов по '+STATE.perSet],
     ['Прибавка', r.rule],
-    ['К 30-му дню', r.day30+'  (×'+mult+'),  подход ≈ '+finPerSet]
+    ['К 30-му дню', r.day30+'  (×'+mult+')  —  финал '+f.setsF+'×'+f.perF]
   ];
   var y=152;
   lines.forEach(function(l){
