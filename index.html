@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Отжимания · персональный расчёт</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --concrete:#E7E4DD; --panel:#FBFAF7; --ink:#1A1916; --ink-soft:#6E6A61;
+    --line:#D6D2C8; --tape:#DD3B21; --tape-dark:#B12C16; --muted:#8C8579;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--concrete);color:var(--ink);line-height:1.5;padding:18px 14px 56px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:560px;margin:0 auto}
+
+  .masthead{border-bottom:3px solid var(--ink);padding-bottom:10px;margin-bottom:18px}
+  .eyebrow{font-family:'Oswald',sans-serif;font-weight:500;text-transform:uppercase;letter-spacing:.22em;font-size:11px;color:var(--tape)}
+  h1{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;font-size:30px;line-height:1;margin-top:4px}
+  .lead{font-size:13.5px;color:var(--ink-soft);margin-top:8px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:18px 16px;margin-bottom:14px}
+  .card-label{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.12em;font-size:12px;color:var(--ink-soft);margin-bottom:14px}
+
+  .seg{display:flex;gap:6px;margin-bottom:18px}
+  .seg button{flex:1;font-family:'Oswald',sans-serif;font-weight:500;text-transform:uppercase;letter-spacing:.06em;font-size:13px;padding:11px 6px;background:transparent;color:var(--ink-soft);border:1.5px solid var(--line);border-radius:3px;cursor:pointer;transition:all .15s ease}
+  .seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  .fields{display:flex;gap:12px;margin-bottom:8px}
+  .field{flex:1}
+  .field label{display:block;font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+  .field .hint{font-weight:400;text-transform:none;letter-spacing:0;font-size:10.5px}
+  .field input{width:100%;font-family:'Oswald',sans-serif;font-weight:600;font-size:34px;text-align:center;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:3px;padding:8px 4px}
+  .field input:focus{outline:none;border-color:var(--tape)}
+  .dash{align-self:center;font-family:'Oswald',sans-serif;font-size:30px;color:var(--line);padding-top:18px}
+
+  .go{width:100%;margin-top:14px;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.1em;font-size:15px;color:#fff;background:var(--tape);border:none;border-radius:3px;padding:14px;cursor:pointer;transition:background .15s ease}
+  .go:hover{background:var(--tape-dark)}
+  .err{color:var(--tape);font-size:12.5px;margin-top:10px;min-height:0}
+
+  #out{display:none}
+  #out.show{display:block;animation:rise .35s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .verdict{background:var(--ink);color:#F4F2EC;border-radius:4px;padding:18px 16px;margin-bottom:14px}
+  .verdict .big{font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.04em}
+  .start-num{font-family:'Oswald',sans-serif;font-weight:700;font-size:64px;line-height:.9;color:#fff;margin:6px 0 2px}
+  .start-num span{font-size:20px;color:var(--tape);margin-left:6px}
+  .scheme{font-size:13.5px;color:#C9C5BB;margin-top:6px}
+  .coach{font-size:13.5px;color:#F4F2EC;margin-top:14px;padding-top:13px;border-top:1px solid #3A3833;font-style:italic}
+  .coach b{font-style:normal;color:#fff}
+
+  .plans-label{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.12em;font-size:12px;color:var(--ink-soft);margin:4px 2px 10px}
+  .plan{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:15px 16px;margin-bottom:11px;position:relative;cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease}
+  .plan:hover{border-color:var(--muted)}
+  .plan.sel{border:2px solid var(--tape);box-shadow:0 0 0 3px rgba(221,59,33,.12)}
+  .plan .stamp{position:absolute;top:-9px;right:14px;background:var(--ink);color:#fff;font-family:'Oswald',sans-serif;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;padding:3px 9px;border-radius:2px}
+  .plan.sel .stamp{background:var(--tape)}
+  .plan-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px}
+  .plan-name{font-family:'Oswald',sans-serif;font-weight:600;font-size:18px;text-transform:uppercase;letter-spacing:.03em}
+  .bars{display:flex;gap:3px}
+  .bars i{width:14px;height:5px;background:var(--line);border-radius:1px}
+  .bars i.fill{background:var(--tape)}
+  .plan-rule{font-size:13.5px;color:var(--ink);margin:7px 0 4px;font-weight:500}
+  .plan-sets{font-size:12.5px;color:var(--ink-soft);margin-bottom:11px}
+  .plan-sets b{color:var(--ink);font-weight:600}
+  .plan-grid{display:flex;gap:10px}
+  .stat{flex:1;background:#fff;border:1px solid var(--line);border-radius:3px;padding:9px 10px}
+  .stat .k{font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}
+  .stat .v{font-family:'Oswald',sans-serif;font-weight:600;font-size:22px;margin-top:2px}
+  .stat .v small{font-size:13px;color:var(--ink-soft);font-weight:400}
+  .pick-hint{text-align:center;font-size:12px;color:var(--ink-soft);margin:2px 0 14px}
+
+  /* share */
+  #share{display:none}
+  #share.show{display:block}
+  .share-head{font-family:'Oswald',sans-serif;font-weight:600;font-size:16px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+  .share-sum{font-size:13.5px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:3px;padding:11px 12px;white-space:pre-line;margin:10px 0 12px;line-height:1.55}
+  .rec-list{margin:0 0 14px;padding:0;list-style:none}
+  .rec-list li{font-size:13px;color:var(--ink);padding-left:16px;position:relative;margin-bottom:6px}
+  .rec-list li:before{content:"›";position:absolute;left:0;color:var(--tape);font-weight:700}
+  .btn-row{display:flex;gap:8px}
+  .sbtn{flex:1;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:12.5px;padding:12px 6px;border-radius:3px;cursor:pointer;border:1.5px solid var(--ink);background:#fff;color:var(--ink);transition:all .15s ease}
+  .sbtn.primary{background:var(--ink);color:#fff}
+  .sbtn:active{transform:translateY(1px)}
+  .fallback{display:none;width:100%;margin-top:10px;font-size:12px;font-family:'Inter';border:1.5px solid var(--tape);border-radius:3px;padding:8px;min-height:96px;resize:none}
+  .fallback.show{display:block}
+  .copied{font-size:12px;color:var(--good,#3F7A46);text-align:center;margin-top:8px;min-height:14px}
+
+  /* graph */
+  .gtitle{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:13px;margin-bottom:2px}
+  .gsub{font-size:12px;color:var(--ink-soft);margin-bottom:12px}
+  svg{width:100%;height:auto;display:block}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+  .legend span{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft)}
+  .legend span i{width:16px;height:3px;border-radius:2px;display:inline-block}
+
+  .exp h3{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:13px;margin-bottom:10px}
+  .exp .phase{display:flex;gap:12px;margin-bottom:11px}
+  .exp .phase .d{font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;color:var(--tape);white-space:nowrap;padding-top:1px;min-width:62px}
+  .exp .phase .t{font-size:13px;color:var(--ink)}
+  .exp .phase .t b{font-weight:600}
+
+  .rules{font-size:12.5px;color:var(--ink-soft);padding:2px 4px;margin-top:6px}
+  .rules b{color:var(--ink)}
+  .rules p{margin-bottom:5px}
+  @media (prefers-reduced-motion:reduce){#out.show{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="eyebrow">Челлендж · 35+</div>
+    <h1>Отжимания<br>персональный расчёт</h1>
+    <p class="lead">Тест: максимум до потери техники → отдых 2 минуты → ещё максимум. Впиши обе цифры — получишь свой план на месяц в трёх скоростях.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Твой вариант</div>
+    <div class="seg" id="seg">
+      <button data-v="full" class="on">Классика</button>
+      <button data-v="knee">С колен</button>
+    </div>
+    <div class="fields">
+      <div class="field">
+        <label>1-й подход<br><span class="hint">до потери техники</span></label>
+        <input id="a" type="number" inputmode="numeric" min="1" placeholder="40">
+      </div>
+      <div class="dash">—</div>
+      <div class="field">
+        <label>2-й подход<br><span class="hint">через 2 мин</span></label>
+        <input id="b" type="number" inputmode="numeric" min="0" placeholder="20">
+      </div>
+    </div>
+    <button class="go" id="go">Рассчитать</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div id="out">
+    <div class="verdict">
+      <div class="big">Твой старт — день 1</div>
+      <div class="start-num" id="startNum"></div>
+      <div class="scheme" id="scheme"></div>
+      <div class="coach" id="coach"></div>
+    </div>
+
+    <div class="plans-label">Выбери скорость — нажми на карточку</div>
+    <div id="plans"></div>
+    <div class="pick-hint" id="pickHint">↑ нажми на план, чтобы выбрать и поделиться</div>
+
+    <div class="card" id="share">
+      <div class="share-head">Твой выбор</div>
+      <div class="share-sum" id="shareSum"></div>
+      <ul class="rec-list" id="recList"></ul>
+      <div class="btn-row">
+        <button class="sbtn primary" id="copyBtn">Скопировать для чата</button>
+        <button class="sbtn" id="imgBtn">Скачать картинку</button>
+      </div>
+      <textarea class="fallback" id="fallback" readonly></textarea>
+      <div class="copied" id="copied"></div>
+    </div>
+
+    <div class="card">
+      <div class="gtitle">График прогрессии</div>
+      <div class="gsub">Дневная норма по дням. Выбранный план — ярким.</div>
+      <div id="graph"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="card exp">
+      <h3>Чего реально ждать</h3>
+      <div class="phase"><div class="d">Дни 1–10</div><div class="t"><b>Легко, и это правильно.</b> Норма ещё ниже твоего потолка — тело привыкает к объёму. Не гонись и не добавляй сверх плана.</div></div>
+      <div class="phase"><div class="d">Дни 11–22</div><div class="t"><b>Начинает жечь.</b> Подходы перестают быть лёгкими, тут отваливается большинство. Держи схему, не уходи в отказ — добирай объём числом подходов, а не геройством.</div></div>
+      <div class="phase"><div class="d">Дни 23–30</div><div class="t"><b>Настоящий тест.</b> Подходы подбираются к проценту от твоего максимума. Поплыла техника (таз провис, локти враскоряку) — лучше недобрать пару повторов, чем добить с травмой плеча.</div></div>
+      <div class="phase"><div class="d">Плато</div><div class="t"><b>Линейная прибавка рано или поздно упрётся.</b> Не закрыл норму чисто 2 дня подряд — откатись на 3–4 дня назад и иди снова. Это разгон, а не провал.</div></div>
+      <div class="phase"><div class="d">Главное</div><div class="t">Сон 7+ часов и один день отдыха для верха в неделю дают больше, чем любая лишняя серия. Смысл — не «кто больше», а закрыть месяц без дыр и прибавить по сравнению с собой.</div></div>
+    </div>
+
+    <div class="rules">
+      <p><b>Правило подходов:</b> дели дневную норму на заявленное число заходов, в каждом оставляй 2–3 повторения в запасе. До отказа — только в тесте.</p>
+      <p><b>Сорвал день:</b> 1–2 джокера на месяц — пропуск без обнуления цепочки.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/*
+  КАК СЧИТАЕТ (по-простому):
+  1) СТАРТ = первая цифра теста + вторая. Столько ты уже выдал —
+     значит на 5-6 спокойных подходов точно разложишь.
+  2) ПОДХОДЫ: 6, если старт >= 30, иначе 5. За подход = старт / подходы.
+  3) ПРИБАВКА у трёх планов: 2% / 3.5% / 5% от старта в день.
+     Если выходит меньше 1 отжимания в день — делаем "+1 раз в N дней".
+  4) B/A (вторая делить на первую) = восстановление. Подсказывает скорость.
+*/
+
+var variant = 'full';
+document.getElementById('seg').addEventListener('click', function(e){
+  var btn = e.target.closest('button'); if(!btn) return;
+  variant = btn.dataset.v;
+  var bs = document.querySelectorAll('#seg button');
+  for(var i=0;i<bs.length;i++) bs[i].classList.toggle('on', bs[i]===btn);
+});
+
+var PLANS = [
+  {name:'Щадящий', pct:0.02,  bars:1, color:'#8C8579'},
+  {name:'Основной',pct:0.035, bars:2, color:'#1A1916'},
+  {name:'Жёсткий', pct:0.05,  bars:3, color:'#DD3B21'}
+];
+
+// возвращает план + полный ряд по 30 дням
+function buildPlan(start, pct){
+  var rate = start * pct, rule, series = [];
+  if(rate >= 1){
+    var inc = Math.max(1, Math.round(rate));
+    rule = '+' + inc + ' каждый день';
+    for(var d=0; d<30; d++) series.push(start + inc*d);
+  } else {
+    var everyN = Math.max(1, Math.round(1/rate));
+    rule = everyN === 1 ? '+1 каждый день' : '+1 раз в ' + everyN + ' дн.';
+    for(var d2=0; d2<30; d2++) series.push(start + Math.floor(d2/everyN));
+  }
+  return {rule:rule, series:series, day30:series[29]};
+}
+
+var STATE = null; // вычисленные данные
+
+function calc(){
+  var a = parseInt(document.getElementById('a').value, 10);
+  var b = parseInt(document.getElementById('b').value, 10);
+  var err = document.getElementById('err');
+  if(!a || a < 1){ err.textContent = 'Впиши первый подход — хотя бы 1.'; return; }
+  if(isNaN(b) || b < 0){ err.textContent = 'Впиши второй подход (можно 0).'; return; }
+  err.textContent = '';
+
+  var start = a + b;
+  var sets = start >= 30 ? 6 : 5;
+  var perSet = Math.max(1, Math.round(start / sets));
+  var ratio = b / a;
+  var exName = variant === 'knee' ? 'с колен' : 'классика';
+
+  var built = PLANS.map(function(p){ return buildPlan(start, p.pct); });
+
+  STATE = {a:a,b:b,start:start,sets:sets,perSet:perSet,ratio:ratio,exName:exName,built:built,rec:0,selected:null};
+
+  // рекомендуемый план по восстановлению
+  var coach;
+  if(ratio >= 0.5){ STATE.rec = 2; coach = '<b>Восстановление сильное</b> ('+a+'→'+b+'). Мотор есть — можешь смело брать жёсткий.'; }
+  else if(ratio >= 0.33){ STATE.rec = 1; coach = '<b>Восстановление среднее</b> ('+a+'→'+b+'). Бери основной — ровный прирост без геройства.'; }
+  else { STATE.rec = 0; coach = '<b>Садишься быстро</b> ('+a+'→'+b+'). Не лезь в жёсткий — щадящий и больше подходов, иначе сольёшься к середине.'; }
+
+  document.getElementById('startNum').innerHTML = start + '<span>отжиманий</span>';
+  document.getElementById('scheme').textContent = sets + ' подхода по ' + perSet + ' · ' + exName + ' · не до отказа';
+  document.getElementById('coach').innerHTML = coach;
+
+  renderPlans();
+  renderGraph();
+  document.getElementById('share').classList.remove('show');
+  document.getElementById('pickHint').style.display = 'block';
+  document.getElementById('out').classList.add('show');
+}
+
+function renderPlans(){
+  var wrap = document.getElementById('plans'); wrap.innerHTML = '';
+  PLANS.forEach(function(p, i){
+    var r = STATE.built[i];
+    var finPerSet = Math.max(1, Math.round(r.day30 / STATE.sets));
+    var mult = (r.day30 / STATE.start).toFixed(1);
+    var el = document.createElement('div');
+    el.className = 'plan' + (i===STATE.selected?' sel':'');
+    var stamp = (i===STATE.rec) ? '<div class="stamp">'+(i===STATE.selected?'выбрано':'тебе сюда')+'</div>'
+                : (i===STATE.selected ? '<div class="stamp">выбрано</div>' : '');
+    el.innerHTML = stamp +
+      '<div class="plan-top"><div class="plan-name">'+p.name+'</div>'+
+        '<div class="bars">'+[0,1,2].map(function(n){return '<i class="'+(n<p.bars?'fill':'')+'"></i>';}).join('')+'</div></div>'+
+      '<div class="plan-rule">'+r.rule+'</div>'+
+      '<div class="plan-sets"><b>'+STATE.sets+' подходов</b>: старт по '+STATE.perSet+' → финал по '+finPerSet+'</div>'+
+      '<div class="plan-grid">'+
+        '<div class="stat"><div class="k">К 30-му дню</div><div class="v">'+r.day30+' <small>×'+mult+'</small></div></div>'+
+        '<div class="stat"><div class="k">Прирост к старту</div><div class="v">+'+(r.day30-STATE.start)+'</div></div>'+
+      '</div>';
+    el.addEventListener('click', function(){ selectPlan(i); });
+    wrap.appendChild(el);
+  });
+}
+
+function selectPlan(i){
+  STATE.selected = i;
+  renderPlans();
+  renderGraph();
+  document.getElementById('pickHint').style.display = 'none';
+
+  var p = PLANS[i], r = STATE.built[i];
+  var finPerSet = Math.max(1, Math.round(r.day30 / STATE.sets));
+  var mult = (r.day30 / STATE.start).toFixed(1);
+
+  var sum = '🏋️ Челлендж «Отжимания» — мой план\n'+
+    'Тест: '+STATE.a+'–'+STATE.b+' ('+STATE.exName+')\n'+
+    'Скорость: '+p.name+'\n'+
+    'Старт: '+STATE.start+'/день — '+STATE.sets+' подходов по '+STATE.perSet+'\n'+
+    'Прибавка: '+r.rule+'\n'+
+    'К 30-му дню: '+r.day30+' (×'+mult+'), подход ≈ '+finPerSet;
+  document.getElementById('shareSum').textContent = sum;
+  document.getElementById('fallback').value = sum;
+  STATE.summary = sum;
+
+  // рекомендации под выбор
+  var recs = [];
+  if(STATE.b === 0) recs.push('Второй подход — 0. Выносливость пока на нуле: держи джокеры под рукой и не спеши.');
+  var finPct = Math.round(finPerSet / STATE.a * 100);
+  if(finPerSet > STATE.a * 0.85) recs.push('К финалу подход (~'+finPerSet+') почти равен твоему нынешнему максимуму ('+STATE.a+'). Реально только при нормальном сне и без пропусков — иначе ступенью мягче.');
+  else if(finPerSet > STATE.a * 0.6) recs.push('К финалу подходы дойдут до ~'+finPct+'% твоего максимума. Ощутимо, но посильно.');
+  else recs.push('К финалу подходы остаются комфортными (~'+finPct+'% максимума) — финиш почти гарантирован.');
+  if(i > STATE.rec) recs.push('Это быстрее рекомендованного по восстановлению. Можно, но следи за техникой и используй откат при заминке.');
+  if(i < STATE.rec) recs.push('Это мягче рекомендованного — стабильно дойдёшь, можешь позже переключиться вверх.');
+  var rl = document.getElementById('recList');
+  rl.innerHTML = recs.map(function(t){return '<li>'+t+'</li>';}).join('');
+
+  document.getElementById('copied').textContent = '';
+  document.getElementById('fallback').classList.remove('show');
+  var sh = document.getElementById('share'); sh.classList.add('show');
+  sh.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ---------- ГРАФИК (рисуем сами, без библиотек) ---------- */
+function renderGraph(){
+  var W=560,H=230, padL=36,padR=16,padT=16,padB=28;
+  var yMin = STATE.start;
+  var yMax = Math.max(STATE.built[0].day30, STATE.built[1].day30, STATE.built[2].day30);
+  if(yMax === yMin) yMax = yMin + 1;
+  function xm(d){ return padL + (d/29)*(W-padL-padR); }
+  function ym(v){ return padT + (1-(v-yMin)/(yMax-yMin))*(H-padT-padB); }
+
+  var svg = '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="График прогрессии">';
+  // горизонтальные линии и подписи Y
+  var yticks = [yMin, Math.round((yMin+yMax)/2), yMax];
+  yticks.forEach(function(v){
+    var y = ym(v);
+    svg += '<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="#E1DDD3" stroke-width="1"/>';
+    svg += '<text x="'+(padL-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="#9A958B" font-family="Inter">'+v+'</text>';
+  });
+  // подписи X
+  [1,15,30].forEach(function(day){
+    var x = xm(day-1);
+    svg += '<text x="'+x+'" y="'+(H-8)+'" text-anchor="middle" font-size="11" fill="#9A958B" font-family="Inter">'+day+'</text>';
+  });
+  svg += '<text x="'+padL+'" y="'+(H-8)+'" text-anchor="start" font-size="10" fill="#B7B2A7" font-family="Inter"></text>';
+
+  // линии планов
+  var sel = STATE.selected;
+  PLANS.forEach(function(p, i){
+    var s = STATE.built[i].series;
+    var pts = s.map(function(v,d){ return xm(d)+','+ym(v); }).join(' ');
+    var dim = (sel!==null && sel!==i);
+    var op = dim ? 0.22 : 1;
+    var w  = (sel===i) ? 3 : (dim ? 1.4 : 2);
+    svg += '<polyline points="'+pts+'" fill="none" stroke="'+p.color+'" stroke-width="'+w+'" stroke-linejoin="round" opacity="'+op+'"/>';
+    if(sel===i){
+      var ex = xm(29), ey = ym(STATE.built[i].day30);
+      svg += '<circle cx="'+ex+'" cy="'+ey+'" r="4" fill="'+p.color+'"/>';
+      svg += '<text x="'+(ex-6)+'" y="'+(ey-8)+'" text-anchor="end" font-size="13" font-weight="700" fill="'+p.color+'" font-family="Oswald">'+STATE.built[i].day30+'</text>';
+    }
+  });
+  svg += '</svg>';
+  document.getElementById('graph').innerHTML = svg;
+
+  var leg = PLANS.map(function(p,i){
+    var faded = (sel!==null && sel!==i) ? 'opacity:.4' : '';
+    return '<span style="'+faded+'"><i style="background:'+p.color+'"></i>'+p.name+'</span>';
+  }).join('');
+  document.getElementById('legend').innerHTML = leg;
+}
+
+/* ---------- ПОДЕЛИТЬСЯ ---------- */
+document.getElementById('copyBtn').addEventListener('click', function(){
+  var txt = STATE.summary, msg = document.getElementById('copied');
+  function ok(){ msg.textContent = '✓ Скопировано — вставь в чат'; }
+  function fail(){
+    var f = document.getElementById('fallback'); f.classList.add('show'); f.focus(); f.select();
+    msg.textContent = 'Выдели текст выше и скопируй вручную';
+  }
+  if(navigator.share){
+    navigator.share({text:txt}).then(ok).catch(function(){ tryClip(); });
+  } else { tryClip(); }
+  function tryClip(){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(ok).catch(fail);
+    } else fail();
+  }
+});
+
+document.getElementById('imgBtn').addEventListener('click', function(){
+  var p = PLANS[STATE.selected], r = STATE.built[STATE.selected];
+  var finPerSet = Math.max(1, Math.round(r.day30 / STATE.sets));
+  var mult = (r.day30 / STATE.start).toFixed(1);
+  var c = document.createElement('canvas'); c.width=600; c.height=420;
+  var x = c.getContext('2d');
+  x.fillStyle='#FBFAF7'; x.fillRect(0,0,600,420);
+  x.fillStyle='#1A1916'; x.fillRect(0,0,600,96);
+  x.fillStyle='#DD3B21'; x.fillRect(0,96,600,5);
+  x.fillStyle='#fff'; x.font='700 30px Oswald, Arial'; x.fillText('ЧЕЛЛЕНДЖ · ОТЖИМАНИЯ', 32, 46);
+  x.fillStyle='#DD3B21'; x.font='600 18px Oswald, Arial'; x.fillText('МОЙ ПЛАН НА МЕСЯЦ', 32, 76);
+  x.fillStyle='#1A1916';
+  var lines = [
+    ['Тест', STATE.a+' – '+STATE.b+'  ('+STATE.exName+')'],
+    ['Скорость', p.name],
+    ['Старт', STATE.start+' / день  —  '+STATE.sets+' подходов по '+STATE.perSet],
+    ['Прибавка', r.rule],
+    ['К 30-му дню', r.day30+'  (×'+mult+'),  подход ≈ '+finPerSet]
+  ];
+  var y=152;
+  lines.forEach(function(l){
+    x.fillStyle='#6E6A61'; x.font='600 14px Arial'; x.fillText(l[0].toUpperCase(), 32, y);
+    x.fillStyle='#1A1916'; x.font='600 22px Oswald, Arial'; x.fillText(l[1], 32, y+26);
+    y+=58;
+  });
+  x.fillStyle='#9A958B'; x.font='13px Arial'; x.fillText('5–6 подходов, 2–3 повторения в запасе. До отказа — только в тесте.', 32, 402);
+
+  var url = c.toDataURL('image/png');
+  var a = document.createElement('a'); a.href=url; a.download='moy-plan-otzhimaniya.png';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  document.getElementById('copied').textContent = '✓ Картинка скачана';
+});
+
+document.getElementById('go').addEventListener('click', calc);
+var inps = document.querySelectorAll('#a, #b');
+for(var i=0;i<inps.length;i++) inps[i].addEventListener('keydown', function(e){ if(e.key==='Enter') calc(); });
+</script>
+</body>
+</html>
